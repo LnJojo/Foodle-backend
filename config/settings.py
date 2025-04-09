@@ -131,6 +131,11 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # CORS configuration
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True  # Temporairement pour tester
+CSRF_TRUSTED_ORIGINS = ['https://foodle-frontend.vercel.app']
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
 
 SITE_ID = 1
@@ -144,6 +149,13 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+}
+
+REST_AUTH = {
+    'USE_JWT': False,
+    'JWT_AUTH_COOKIE': 'auth',
+    'JWT_AUTH_REFRESH_COOKIE': 'refresh-token',
+    'USER_DETAILS_SERIALIZER': 'api.serializers.UserSerializer',  # Ajustez selon votre chemin
 }
 
 # Configuration pour allauth
