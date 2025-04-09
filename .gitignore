@@ -1,0 +1,36 @@
+# Environnements virtuels
+venv/
+env/
+ENV/
+.env
+
+# Fichiers cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Base de données locale
+db.sqlite3
+db.sqlite3-journal
+
+# Fichiers de logs
+*.log
+
+# Fichiers média et statiques collectés
+/media/
+/staticfiles/
+
+# Configuration IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Fichiers système
+.DS_Store
+Thumbs.db
