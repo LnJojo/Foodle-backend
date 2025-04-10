@@ -12,6 +12,21 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'bio', 'avatar']
         read_only_fields = ['id']
+        
+    def validate_email(self, value):
+        """
+        Valide que l'email est unique.
+        """
+        user = self.context['request'].user if 'request' in self.context else None
+        
+        # Si c'est une mise à jour, vérifier que l'email est disponible sauf pour l'utilisateur courant
+        if self.instance and value == self.instance.email:
+            return value
+            
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Cet email est déjà utilisé.")
+        
+        return value
 
 class GroupSerializer(serializers.ModelSerializer):
     creator = UserSerializer(read_only=True)
