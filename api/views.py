@@ -35,18 +35,15 @@ class GroupViewSet(viewsets.ModelViewSet):
             members=self.request.user
         )
         
-        # Pour le débogage - imprimez le nombre réel de membres pour chaque groupe
         for group in queryset:
             actual_members = GroupMember.objects.filter(group=group).count()
             print(f"Group '{group.name}' (ID: {group.id}) has {actual_members} actual members")
         
-        # Maintenant continuez avec les annotations
         queryset = queryset.annotate(
             member_count=Count('membership', distinct=True),
             competition_count=Count('competitions', distinct=True)
         ).prefetch_related('members', 'competitions')
         
-        # Vérifiez le résultat après annotation
         for group in queryset:
             print(f"After annotation, Group '{group.name}' has member_count: {group.member_count}")
         
@@ -84,15 +81,12 @@ class GroupViewSet(viewsets.ModelViewSet):
         group = self.get_object()
         user = request.user
         
-        # La correction est ici - il faut utiliser le modèle GroupMember pour vérifier le rôle
-        # Au lieu de group.members.filter(user=user, role='admin').exists():
         if not GroupMember.objects.filter(group=group, user=user, role='admin').exists():
             return Response(
                 {"detail": "Seuls les administrateurs peuvent créer des invitations."},
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Optionnel : définir une date d'expiration (ex: 7 jours)
         expires_at = timezone.now() + timedelta(days=7)
         
         invitation = GroupInvitation.objects.create(
@@ -112,7 +106,7 @@ class GroupViewSet(viewsets.ModelViewSet):
         try:
             invitation = GroupInvitation.objects.get(id=invitation_id, is_active=True)
             
-            # Vérifier si l'invitation a expiré - utilisez timezone.now() au lieu de datetime.now()
+            # Vérifier si l'invitation a expiré
             if invitation.expires_at and invitation.expires_at < timezone.now():
                 invitation.is_active = False
                 invitation.save()
@@ -211,11 +205,9 @@ class GroupViewSet(viewsets.ModelViewSet):
         ).exists()
         
         if favorite_exists:
-            # Si oui, on le supprime
             GroupFavorite.objects.filter(user=user, group=group).delete()
             return Response({"status": "removed", "message": "Groupe retiré des favoris"})
         else:
-            # Sinon, on l'ajoute
             GroupFavorite.objects.create(user=user, group=group)
             return Response({"status": "added", "message": "Groupe ajouté aux favoris"})
     
@@ -241,7 +233,7 @@ class CompetitionViewSet(viewsets.ModelViewSet):
         ).select_related(
             'creator', 'group'
         ).prefetch_related(
-            'members','restaurants'  # Important pour compter les participants
+            'members','restaurants'
         ).annotate(
             participant_count=Count('members')
         ).distinct()
@@ -259,7 +251,7 @@ class CompetitionViewSet(viewsets.ModelViewSet):
     def participants(self, request, pk=None):
         """Retourne la liste des participants d'une compétition spécifique"""
         competition = self.get_object()
-        participants = competition.members.all()  # Utilisez le nom de la relation dans votre modèle
+        participants = competition.members.all() 
         serializer = UserSerializer(participants, many=True)
         return Response(serializer.data)
     
