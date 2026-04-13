@@ -18,10 +18,16 @@ from competitions.models import Competition, Participant
 from restaurants.models import Restaurant, Rating
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ['username', 'email', 'first_name', 'last_name']
+
+    def get_queryset(self):
+        # Limite la visibilité aux utilisateurs partageant au moins un groupe avec l'utilisateur connecté
+        user = self.request.user
+        group_ids = GroupMember.objects.filter(user=user).values_list('group_id', flat=True)
+        return User.objects.filter(custom_groups__in=group_ids).distinct()
 
 class GroupViewSet(viewsets.ModelViewSet):
     serializer_class = GroupSerializer
@@ -221,13 +227,38 @@ class GroupViewSet(viewsets.ModelViewSet):
     
 class GroupMemberViewSet(viewsets.ModelViewSet):
     serializer_class = GroupMemberSerializer
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['group', 'user', 'role']
-    
+
     def get_queryset(self):
-        # Récupérer les membres des groupes dont l'utilisateur est membre
         user = self.request.user
         return GroupMember.objects.filter(group__members=user)
+
+    def _is_group_admin(self, group):
+        """Vérifie si l'utilisateur connecté est admin du groupe."""
+        return GroupMember.objects.filter(
+            group=group, user=self.request.user, role='admin'
+        ).exists()
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if not self._is_group_admin(instance.group):
+            return Response(
+                {"detail": "Seuls les administrateurs peuvent modifier les membres."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Un membre peut se retirer lui-même, sinon il faut être admin
+        if instance.user != request.user and not self._is_group_admin(instance.group):
+            return Response(
+                {"detail": "Seuls les administrateurs peuvent retirer des membres."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().destroy(request, *args, **kwargs)
     
 class CompetitionViewSet(viewsets.ModelViewSet):
     serializer_class = CompetitionSerializer
@@ -304,13 +335,13 @@ class RatingViewSet(viewsets.ModelViewSet):
     filterset_fields = ['restaurant', 'user']
     
     def get_queryset(self):
+        user = self.request.user
+        # Filtre toujours par appartenance au groupe, même quand restaurant_id est fourni
+        queryset = Rating.objects.filter(restaurant__competition__group__members=user)
         restaurant_id = self.request.query_params.get('restaurant', None)
         if restaurant_id:
-            return Rating.objects.filter(restaurant_id=restaurant_id)
-        else:
-            # Récupérer les évaluations des restaurants des compétitions des groupes dont l'utilisateur est membre
-            user = self.request.user
-            return Rating.objects.filter(restaurant__competition__group__members=user)
+            queryset = queryset.filter(restaurant_id=restaurant_id)
+        return queryset
 
 
 
