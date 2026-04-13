@@ -6,7 +6,7 @@ from .views import (
 )
 
 router = DefaultRouter()
-router.register(r'users', UserViewSet)
+router.register(r'users', UserViewSet, basename='user')
 router.register(r'groups', GroupViewSet, basename='group')
 router.register(r'group-members', GroupMemberViewSet, basename='groupmember')
 router.register(r'competitions', CompetitionViewSet, basename='competition')
