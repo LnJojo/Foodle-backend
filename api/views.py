@@ -6,6 +6,46 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
+from django.http import JsonResponse
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_http_methods
+from dj_rest_auth.views import LoginView as DjLoginView
+from django.conf import settings as django_settings
+
+
+@ensure_csrf_cookie
+@require_http_methods(["GET"])
+def get_csrf_token(request):
+    """
+    Endpoint public qui force Django à émettre le cookie CSRF.
+    Appelé une fois au chargement de l'app pour que les futures requêtes
+    authentifiées puissent inclure le header X-CSRFToken.
+    """
+    return JsonResponse({'detail': 'ok'})
+
+
+class CustomLoginView(DjLoginView):
+    """
+    Étend la vue de login pour supporter le paramètre remember_me.
+    Sans remember_me=true, les cookies JWT deviennent des cookies de session
+    (supprimés à la fermeture du navigateur).
+    Avec remember_me=true, les cookies ont une expiration explicite de 30 jours.
+    """
+    def get_response(self):
+        response = super().get_response()
+        remember_me = self.request.data.get('remember_me', False)
+
+        if not remember_me:
+            # Supprimer expires et max-age pour transformer en cookies de session
+            for cookie_key in [
+                django_settings.REST_AUTH.get('JWT_AUTH_COOKIE'),
+                django_settings.REST_AUTH.get('JWT_AUTH_REFRESH_COOKIE'),
+            ]:
+                if cookie_key and cookie_key in response.cookies:
+                    response.cookies[cookie_key]['expires'] = ''
+                    response.cookies[cookie_key]['max-age'] = ''
+
+        return response
 
 from .serializers import (
     UserSerializer, GroupSerializer, GroupMemberSerializer,

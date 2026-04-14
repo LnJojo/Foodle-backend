@@ -3,6 +3,7 @@ Django settings for config project.
 """
 
 from pathlib import Path
+from datetime import timedelta
 import os
 import dj_database_url
 from dotenv import load_dotenv
@@ -142,7 +143,7 @@ SITE_ID = 1
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'dj_rest_auth.jwt_auth.JWTCookieAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -159,10 +160,22 @@ REST_FRAMEWORK = {
 }
 
 REST_AUTH = {
-    'USE_JWT': False,
-    'JWT_AUTH_COOKIE': 'auth',
-    'JWT_AUTH_REFRESH_COOKIE': 'refresh-token',
-    'USER_DETAILS_SERIALIZER': 'api.serializers.UserSerializer',  # Ajustez selon votre chemin
+    'USE_JWT': True,
+    'JWT_AUTH_COOKIE': 'foodle-auth',
+    'JWT_AUTH_REFRESH_COOKIE': 'foodle-refresh',
+    'JWT_AUTH_HTTPONLY': True,
+    'JWT_AUTH_COOKIE_SAMESITE': 'Lax',
+    'JWT_AUTH_COOKIE_USE_CSRF': True,
+    'JWT_AUTH_COOKIE_SECURE': not DEBUG,
+    'USER_DETAILS_SERIALIZER': 'api.serializers.UserSerializer',
+}
+
+# Durée de vie des tokens JWT
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+    'ROTATE_REFRESH_TOKENS': False,
+    'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
 # Configuration pour allauth
