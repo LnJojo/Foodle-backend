@@ -74,7 +74,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / 'templates'],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -165,9 +165,10 @@ REST_AUTH = {
     'JWT_AUTH_REFRESH_COOKIE': 'foodle-refresh',
     'JWT_AUTH_HTTPONLY': True,
     'JWT_AUTH_COOKIE_SAMESITE': 'Lax',
-    'JWT_AUTH_COOKIE_USE_CSRF': True,
+    'JWT_AUTH_COOKIE_USE_CSRF': False,
     'JWT_AUTH_COOKIE_SECURE': not DEBUG,
     'USER_DETAILS_SERIALIZER': 'api.serializers.UserSerializer',
+    'PASSWORD_RESET_SERIALIZER': 'api.serializers.CustomPasswordResetSerializer',
 }
 
 # Durée de vie des tokens JWT
@@ -180,9 +181,22 @@ SIMPLE_JWT = {
 
 # Configuration pour allauth
 ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_EMAIL_VERIFICATION = 'none'  # Vous pouvez changer à 'mandatory' si vous souhaitez vérifier les emails
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_LOGIN_METHODS = {'username', 'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_ADAPTER = 'users.adapters.CustomAccountAdapter'
+
+# URL du frontend — utilisée dans les emails (vérification, reset de mot de passe)
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost')
+
+# Configuration email via Resend (SMTP)
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = 'smtp.resend.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'resend')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@playfoodle.fr')
 
 # Media files
 MEDIA_URL = '/media/'

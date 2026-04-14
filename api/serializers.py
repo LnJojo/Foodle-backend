@@ -2,10 +2,33 @@ from rest_framework import serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from django.conf import settings
+from dj_rest_auth.serializers import PasswordResetSerializer as DjPasswordResetSerializer
 from users.models import User
 from groups.models import Group, GroupFavorite, GroupMember
 from competitions.models import Competition, Participant
 from restaurants.models import Restaurant, Rating
+
+
+class CustomPasswordResetSerializer(DjPasswordResetSerializer):
+    """
+    Surcharge du serializer de reset de mot de passe pour que le lien dans
+    l'email pointe vers le frontend React et non vers le backend Django.
+    """
+    def save(self):
+        from allauth.account.utils import user_pk_to_url_str
+
+        request = self.context.get('request')
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost')
+
+        def url_generator(request, user, temp_key):
+            uid = user_pk_to_url_str(user)
+            return f"{frontend_url}/reset-password/{uid}/{temp_key}"
+
+        self.reset_form.save(
+            request=request,
+            url_generator=url_generator,
+        )
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta :
