@@ -1,0 +1,15 @@
+Bonjour {{ user.username }},
+
+Tu as demandé à renvoyer l'email de confirmation pour ton compte Foodle.
+
+Clique sur le lien ci-dessous pour confirmer ton adresse email :
+
+{{ activate_url }}
+
+Ce lien est valable 3 jours.
+
+Si tu n'es pas à l'origine de cette demande, ignore simplement cet email.
+
+À très vite autour de la table,
+L'équipe Foodle
+playfoodle.fr

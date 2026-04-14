@@ -1,0 +1,15 @@
+Bonjour {{ user.username }},
+
+Bienvenue sur Foodle ! L'app pour organiser vos compétitions de restaurants entre amis.
+
+Une dernière étape avant de pouvoir noter, classer et (peut-être) couronner le meilleur resto du groupe : confirme ton adresse email en cliquant sur le lien ci-dessous.
+
+{{ activate_url }}
+
+Ce lien est valable 3 jours.
+
+Si tu n'es pas à l'origine de cette inscription, ignore simplement cet email.
+
+À très vite autour de la table,
+L'équipe Foodle
+playfoodle.fr
