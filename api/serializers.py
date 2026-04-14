@@ -56,10 +56,11 @@ class GroupSerializer(serializers.ModelSerializer):
     member_count = serializers.SerializerMethodField()
     competition_count = serializers.IntegerField(read_only=True)
     is_favorite = serializers.SerializerMethodField()
+    current_user_role = serializers.SerializerMethodField()
 
     class Meta:
         model = Group
-        fields = ['id', 'name', 'description', 'creator', 'created_at', 'privacy', 'member_count', 'competition_count', 'is_favorite']
+        fields = ['id', 'name', 'description', 'creator', 'created_at', 'privacy', 'member_count', 'competition_count', 'is_favorite', 'current_user_role']
         read_only_fields = ['id', 'created_at', 'creator', 'member_count', 'competition_count']
 
     def create(self, validated_data):
@@ -79,10 +80,21 @@ class GroupSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return GroupFavorite.objects.filter(
-                user=request.user, 
+                user=request.user,
                 group=obj
             ).exists()
         return False
+
+    def get_current_user_role(self, obj):
+        """Retourne le rôle de l'utilisateur connecté dans ce groupe (admin/member/None)."""
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            try:
+                member = GroupMember.objects.get(group=obj, user=request.user)
+                return member.role
+            except GroupMember.DoesNotExist:
+                return None
+        return None
         
     
     # @action(detail=True, methods=['get'])
@@ -94,15 +106,16 @@ class GroupSerializer(serializers.ModelSerializer):
 
 class GroupMemberSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
-    
+    is_current_user = serializers.SerializerMethodField()
+
     class Meta:
         model = GroupMember
-        fields = ['id', 'user', 'group', 'role', 'joined_at']
+        fields = ['id', 'user', 'group', 'role', 'joined_at', 'is_current_user']
         read_only_fields = ['id', 'joined_at']
 
     def get_is_current_user(self, obj):
         request = self.context.get('request')
-        return request and request.user == obj.user
+        return bool(request and request.user == obj.user)
 
 class RestaurantSerializer(serializers.ModelSerializer):
     suggested_by = UserSerializer(read_only=True)

@@ -75,7 +75,26 @@ class GroupViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['name', 'description']
     filterset_fields = ['creator']
-    
+
+    def _is_group_admin(self, group):
+        """Vérifie si l'utilisateur connecté est admin du groupe."""
+        return GroupMember.objects.filter(
+            group=group, user=self.request.user, role='admin'
+        ).exists()
+
+    def update(self, request, *args, **kwargs):
+        group = self.get_object()
+        if not self._is_group_admin(group):
+            return Response(
+                {"detail": "Seuls les administrateurs peuvent modifier le groupe."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
+
     def get_queryset(self):
         queryset = Group.objects.filter(
             members=self.request.user
@@ -296,6 +315,12 @@ class GroupMemberViewSet(viewsets.ModelViewSet):
         if instance.user != request.user and not self._is_group_admin(instance.group):
             return Response(
                 {"detail": "Seuls les administrateurs peuvent retirer des membres."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        # Le créateur du groupe ne peut pas être exclu
+        if instance.user == instance.group.creator:
+            return Response(
+                {"detail": "Le créateur du groupe ne peut pas être exclu."},
                 status=status.HTTP_403_FORBIDDEN
             )
         return super().destroy(request, *args, **kwargs)
