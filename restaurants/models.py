@@ -52,10 +52,10 @@ class Rating(models.Model):
         on_delete=models.CASCADE,
         related_name='ratings'
     )
-    food_score = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(10)])
-    service_score = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(10)])
-    ambiance_score = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(10)])
-    value_score = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(10)])
+    food_score = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    service_score = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    ambiance_score = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    value_score = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     comment = models.TextField(blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
