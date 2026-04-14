@@ -185,6 +185,7 @@ ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_LOGIN_METHODS = {'username', 'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 ACCOUNT_ADAPTER = 'users.adapters.CustomAccountAdapter'
+ACCOUNT_EMAIL_SUBJECT_PREFIX = ''
 
 # URL du frontend — utilisée dans les emails (vérification, reset de mot de passe)
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost')
